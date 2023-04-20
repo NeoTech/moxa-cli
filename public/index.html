@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>File Upload</title>
+    <style>
+        html {
+        font-size: 36px;
+        }
+
+        body {
+        font-family: sans-serif;
+        margin: 0;
+        padding: 0;
+        font-size: 1rem;
+        line-height: 1.5;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+        font-size: 2.2rem;
+        }
+
+        small {
+        font-size: 0.9rem;
+        }
+
+        .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 50px;
+        max-width: 500px;
+        margin: 0 auto;
+        width: 100%;
+        }
+
+        .form, .list {
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+        }
+
+        .form {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid black;
+        width: 100%;
+        }
+
+        .form label {
+        font-size: 2.2rem;
+        margin-bottom: 10px;
+        }
+
+        .form input[type="file"] {
+        font-size: 1.2rem;
+        margin-bottom: 20px;
+        }
+
+        .list {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        }
+
+        .list label {
+        font-size: 1.2rem;
+        margin-bottom: 10px;
+        }
+
+        .list select {
+        margin-bottom: 20px;
+        font-size: 1.8rem;
+        }
+
+        .button {
+        font-size: 2rem;
+        padding: 0.5rem 1rem;
+        background-color: #008CBA;
+        color: #FFFFFF;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        width: 100%;
+        margin: 1rem 0;
+        }
+
+        .button:hover {
+        background-color: #006A8E;
+        }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="form">
+        <label for="file">Upload a file:</label>
+        <input type="file" id="file" name="file">
+        <button id="upload-button" class="button">Upload</button>
+      </div>
+      <div class="list">
+        <label for="files">Choose a file:</label>
+        <select id="files" name="files"></select>
+        <div class="list-buttons">
+            <button id="send-button" class="button">Send</button>
+            <button id="del-button" class="button">Delete</button>
+        </div>
+      </div>
+    </div>
+    <script>
+      const uploadButton = document.getElementById('upload-button');
+      const sendButton = document.getElementById('send-button');
+      const delButton = document.getElementById('del-button');
+      const filesSelect = document.getElementById('files');
+
+      // Function to update the list of files
+      function updateFilesList() {
+        fetch('/list')
+          .then(response => response.json())
+          .then(files => {
+            console.log(files);
+            filesSelect.innerHTML = '';
+            files.forEach(file => {
+              const option = document.createElement('option');
+              option.value = file;
+              option.innerText = file;
+              filesSelect.appendChild(option);
+            });
+          });
+      }
+
+      // Update list of files when page loads
+      window.onload = () => updateFilesList();
+
+
+      // Upload file on button click
+      uploadButton.addEventListener('click', () => {
+        const fileInput = document.getElementById('file');
+        const formData = new FormData();
+        formData.append('upload', fileInput.files[0]);
+
+        fetch('/upload', {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => {
+          if (response.status === 200) {
+            // Update list of files after successful upload
+            updateFilesList();
+          }
+        })
+        .catch(error => console.error(error));
+      });
+
+    // Add event listener for delete buttons
+    delButton.addEventListener('click', function(event) {
+        // Get filename from data-filename attribute
+        const selectedFile = filesSelect.value;
+        // Send DELETE request to server
+        fetch('/uploads/' + selectedFile, { method: 'DELETE' })
+        .then(function(response) {
+            if (response.ok) {
+            console.log('File deleted');
+            // Refresh file list
+            updateFilesList();
+            } else {
+            console.log('Error deleting file: ' + response.statusText);
+            }
+        })
+        .catch(function(error) {
+            console.log('Error deleting file:', error);
+        });
+    });
+
+      // Send file on button click
+      sendButton.addEventListener('click', () => {
+        const selectedFile = filesSelect.value;
+
+        fetch(`/send?file=${selectedFile}&ip=192.168.1.201&size=50&port=4001&interval=100`)
+          .then(response => {
+            if (response.status === 200) {
+              console.log('File sent successfully');
+            }
+          })
+          .catch(error => console.error(error));
+  });
+</script>
+</body>
+</html>

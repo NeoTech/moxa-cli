@@ -1,0 +1,15 @@
+G50 S4000
+G0 X100.
+G0 Z100.
+
+(Tool change)
+T010101
+
+(Feed per minute)
+G94
+(Spindle start)
+M3
+(Gear change)
+M41
+
+
