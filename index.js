@@ -89,7 +89,7 @@ server.get('/send', (req, res, next) => {
   child.on('close', (code) => {
     console.log(`child process exited with code ${code}`);
   });
-  res.send(200, 'File sent successfully');
+  res.send(200, 'File sent - See messages');
   next();
 });
 

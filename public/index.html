@@ -73,7 +73,22 @@
 
         .list select {
         margin-bottom: 20px;
-        font-size: 1.8rem;
+        font-size: 2rem;
+        border: 0; 
+        background-color: #ffffc6;
+        color: #853737;
+        }
+
+        .input {
+        font-size: 1rem;
+        padding: 0.5rem 1rem;
+        background-color: #ffffc6;
+        color: #0b0b0b;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        width: 100%;
+        margin: 1rem 0;
         }
 
         .button {
@@ -88,6 +103,8 @@
         margin: 1rem 0;
         }
 
+
+
         .button:hover {
         background-color: #006A8E;
         }
@@ -95,12 +112,23 @@
   </head>
   <body>
     <div class="container">
+      <div class="settings">
+
+      </div>
       <div class="form">
         <label for="file">Upload a file:</label>
         <input type="file" id="file" name="file">
         <button id="upload-button" class="button">Upload</button>
       </div>
       <div class="list">
+        <div class="settings">
+          <table>
+          <tr><td><label for="ip">IP:</label></td><td><input class="input" type="text" id="ip" name="ip" value="192.168.1.201"></td></tr>
+          <tr><td><label for="port">PORT:</label></td><td><input class="input" type="text" id="port" name="port" value="4001"></td></tr>
+          <tr><td><label for="interval">INTVAL:</label></td><td><input class="input" type="text" id="interval" name="interval" value="1"></td></tr>
+          <tr><td><label for="size">SIZE:</label></td><td><input class="input" type="text" id="size" name="size" value="1"></td></tr>
+          </table>  
+        </div>
         <label for="files">Choose a file:</label>
         <select id="files" name="files"></select>
         <div class="list-buttons">
@@ -114,6 +142,10 @@
       const sendButton = document.getElementById('send-button');
       const delButton = document.getElementById('del-button');
       const filesSelect = document.getElementById('files');
+      const ip = document.getElementById('ip').value;
+      const port = document.getElementById('port').value;
+      const interval = document.getElementById('interval').value;
+      const size = document.getElementById('size').value;
 
       // Function to update the list of files
       function updateFilesList() {
@@ -178,7 +210,7 @@
       sendButton.addEventListener('click', () => {
         const selectedFile = filesSelect.value;
 
-        fetch(`/send?file=${selectedFile}&ip=192.168.1.201&size=50&port=4001&interval=100`)
+        fetch(`/send?file=${selectedFile}&ip=${ip}&size=${size}&port=${port}&interval=${interval}`)
           .then(response => {
             if (response.status === 200) {
               console.log('File sent successfully');
