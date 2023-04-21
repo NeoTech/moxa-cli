@@ -26,27 +26,49 @@ struct Args {
     // Interval to wait between packets: Default is 0
     #[clap(short = 'i', long, default_value = "0")]
     interval: u64,
+    // Receive a file from the remote device: Default is false
+    #[clap(short = 'r', long, value_name = "BOOLEAN", default_value = "false")]
+    receive: bool,
 }
 
-fn main() -> io::Result<()> {
-    print!("\n");
+
+fn receive_file(mut stream: TcpStream) -> io::Result<()> {
     let args: Args = Args::parse();
-    let connection_str: String;
-    match args.ip {
-        Some(ip) => {
-            connection_str = format!("{}:{}", ip, args.port);
-        },
-        None => {
-            let mut cmdhlp = Args::command();
-            let _ = cmdhlp.print_help().unwrap();
-            return Ok(());        }
+    let mut contents = Vec::new();
+    let mut buffer = [0; 1024];
+    let mut bytes_received = 0;
+    let mut idle_secs = 0;
+    stream.set_read_timeout(Some(Duration::from_secs(10)))?;
+    loop {
+        match stream.read(&mut buffer) {
+            Ok(n) if n > 0 => {
+                contents.extend_from_slice(&buffer[..n]);
+                bytes_received += n;
+                println!("\rBytes received: {}", bytes_received);
+                idle_secs = 1;
+            },
+            Ok(_) | Err(_) => {
+                if idle_secs > 0 {
+                    println!("\rClosing connection in 10s...", idle_secs);
+                    io::stdout().flush().unwrap();
+                    thread::sleep(Duration::from_secs(1));
+                    idle_secs -= 1;
+                } else {
+                    println!("\nConnection closed.");
+                    break;
+                }
+            },
+        };
     }
-    
 
-    // connect to the device
-    let mut stream = TcpStream::connect(connection_str)?;
+    let file_name = args.file.as_ref().unwrap();
+    let mut file = File::create(file_name)?;
+    file.write_all(&contents)?;
+    Ok(())
+}
 
-
+fn send_file(mut stream: TcpStream) -> io::Result<()> {
+    let args: Args = Args::parse();
     // read the contents of the file into a buffer
     let mut contents = Vec::new();
     match args.file {
@@ -60,6 +82,7 @@ fn main() -> io::Result<()> {
             io::stdin().read_to_end(&mut contents)?;
         }
     }
+
 
     // Check if the last byte of the file is a newline character.
     let has_newline = contents.last().map(|&b| b == b'\n').unwrap_or(false);
@@ -79,6 +102,30 @@ fn main() -> io::Result<()> {
         bytes_sent += chunk.len();
         print!("\rBytes sent: {} of {}", bytes_sent, contents.len());
     }
+    Ok(())
+}
 
+fn main() -> io::Result<()> {
+    print!("\n");
+    let args: Args = Args::parse();
+    let connection_str: String;
+    match args.ip {
+        Some(ip) => {
+            connection_str = format!("{}:{}", ip, args.port);
+            if args.receive == false {
+                // send the file to the remote device
+                let stream = Some(TcpStream::connect(connection_str)?);
+                send_file(stream.unwrap())?;
+            } else {
+                let listener = Some(TcpStream::connect(connection_str)?);
+                receive_file(listener.unwrap())?;
+            }
+        },
+        None => {
+            let mut cmdhlp = Args::command();
+            let _ = cmdhlp.print_help().unwrap();
+            return Ok(());        
+        }
+    }
     Ok(())
 }
