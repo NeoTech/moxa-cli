@@ -49,7 +49,7 @@ fn receive_file(mut stream: TcpStream) -> io::Result<()> {
             },
             Ok(_) | Err(_) => {
                 if idle_secs > 0 {
-                    println!("\rClosing connection in 10s...", idle_secs);
+                    println!("\rClosing connection in 10s...");
                     io::stdout().flush().unwrap();
                     thread::sleep(Duration::from_secs(1));
                     idle_secs -= 1;
